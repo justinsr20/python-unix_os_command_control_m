@@ -46,6 +46,17 @@ def check_user_args(user_args):
     except ValueError:
         sys.exit('expected ODATE in YYMMDD format, got: {}'.format(date_string))
     return date_string, odate
+
+def do_sh_shell_command(string_command, env_variables=None):
+    cmd = shlex.split(string_command)
+    try:
+       p = subprocess.check_output(string_command, shell=True,
+                                   env=env_variables) # shell=True means sh shell used
+    except subprocess.CalledProcessError as e:
+        print e.output
+        print 'Error running command: ' + '"' + e.cmd + '"' + ' return code: ' + str(e.returncode) + ', see above shell error'
+        return e.returncode, e.cmd
+    return 0, p
  
 def list_old_jobs_to_hold(delete_date, odate, env_variables):
     # some jobs may already be held or deleted. The utility cannot tell us this so we use a db query to filter
@@ -67,17 +78,6 @@ def list_old_jobs_to_delete(delete_date, odate, env_variables):
                         + DATABASE_PORT + ' -c ' + '"' + database_query + '"'
                         , env_variables)
     return list_jobs[1].split('\n')
- 
-def do_sh_shell_command(string_command, env_variables=None):
-    cmd = shlex.split(string_command)
-    try:
-       p = subprocess.check_output(string_command, shell=True,
-                                   env=env_variables) # shell=True means sh shell used
-    except subprocess.CalledProcessError as e:
-        print e.output
-        print 'Error running command: ' + '"' + e.cmd + '"' + ' return code: ' + str(e.returncode) + ', see above shell error'
-        return e.returncode, e.cmd
-    return 0, p
  
 def hold_ajf_job(job_order_id):
     return do_sh_shell_command('ctmpsm -UPDATEAJF ' + job_order_id + ' HOLD')
