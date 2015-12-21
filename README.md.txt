@@ -1,0 +1,1 @@
+This script is used to run a utility to delete old control-m jobs. Needs to run locally on the control-m server
