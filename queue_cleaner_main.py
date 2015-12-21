@@ -1,5 +1,5 @@
 ##################################################################################
-# Author: Justin Stubbs (u350932)
+# Author: Justin Stubbs
 # Create date: 08/07/2015
 # Description: Runs locally on the ctm server and deletes jobs in MIDRANGE.
 # Part of Queue Cleaner automation.
@@ -7,7 +7,7 @@
 # Usage: python del_jobs_main.py <date> <odate>
 #       <date> -> yyyymmdd Is the date equal to or older than you want
 #                           to delete jobs from (do not use current date)
-#        <odate> -> current odate
+#       <odate> -> current odate
 ##################################################################################
  
 import sys
@@ -54,7 +54,8 @@ def do_sh_shell_command(string_command, env_variables=None):
                                    env=env_variables) # shell=True means sh shell used
     except subprocess.CalledProcessError as e:
         print e.output
-        print 'Error running command: ' + '"' + e.cmd + '"' + ' return code: ' + str(e.returncode) + ', see above shell error'
+        print 'Error running command: ' + '"' + e.cmd + '"' + ' return code: ' + str(e.returncode) \
+              + ', see above shell error'
         return e.returncode, e.cmd
     return 0, p
  
@@ -63,7 +64,7 @@ def list_old_jobs_to_hold(delete_date, odate, env_variables):
     database_query="select order_id from a" + odate + "002_ajob where order_time < " \
                    + "'" + delete_date + "'" \
                    + " and not (status = 'Ended OK' or state LIKE 'Deleted %' or state LIKE 'Held %')" + ";"
-    #print database_query
+    #print database_query used for debugging
     list_jobs = do_sh_shell_command('psql -d ' + DATABASE_NAME +  ' -U ' + DATABASE_USER + ' -p '
                         + DATABASE_PORT + ' -c ' + '"' + database_query + '"'
                         , env_variables)
@@ -71,9 +72,10 @@ def list_old_jobs_to_hold(delete_date, odate, env_variables):
  
 def list_old_jobs_to_delete(delete_date, odate, env_variables):
     # filter on all jobs older than date x that have not been deleted
-    database_query="select order_id from a" + odate + "002_ajob where order_time < " \
+    # Note this select query needs to be tailored to your enviroment
+    database_query="select order_id from a" + odate + "<db_ajf_table_name> where order_time < " \
                    + "'" + delete_date + "'" + " and not (state LIKE 'Deleted %') and state LIKE 'Held %'" + ";"
-    #print database_query
+    #print database_query # used for debugging
     list_jobs = do_sh_shell_command('psql -d ' + DATABASE_NAME +  ' -U ' + DATABASE_USER + ' -p '
                         + DATABASE_PORT + ' -c ' + '"' + database_query + '"'
                         , env_variables)
@@ -88,7 +90,7 @@ def delete_ajf_job(job_order_id):
 def email_undeletable_jobs(list_jobs, email):
     attached_file = ",".join(list_jobs)
     msg = MIMEMultipart()
-    msg['Subject'] = 'PCTMON5D: Automation unable to delete MIDRANGE_TEST jobs'
+    msg['Subject'] = '<BATCH_JOB_NAME>: Automation unable to delete <CONTROL-M SERVER NAME> jobs'
     msg['From'] = SUP_EMAIL_FROM
     msg['To'] = SUP_EMAIL_TO
     email_body_message = \
